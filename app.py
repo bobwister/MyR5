@@ -178,7 +178,6 @@ if attrs:
                 'chargePercentRecoveredStr',
                 'chargeDurationStr',
                 'chargePowerStr',
-
             ]].rename(columns={
                 'chargeStartDateFormatted': 'Début charge',
                 'chargeEndDateFormatted': 'Fin charge',
@@ -189,18 +188,48 @@ if attrs:
                 'chargeDurationStr': 'Durée de charge (h)',
                 'chargePowerStr': 'Puissance de charge (kW)'
             })
-            
-            # Générer numérotation décroissante
-            n = len(charges_df)
-            display_df.index = [
-                f"{n - i} <span title=\"Ajout magique d'une charge manquante dans l'API pour rétablir la cohérence de l'historique de recharges\">✨</span>" 
-                if charges_df.loc[idx, "fakeCharge"] 
-                else f"{n - i}"
-                for i, idx in enumerate(charges_df.index)
-            ]
 
-            # Affichage HTML avec tooltips
-            st.write(display_df.to_html(escape=False), unsafe_allow_html=True)
+            # Calcul des totaux pour les colonnes numériques
+            total_energy = display_df['Énergie rechargée (kWh)'].str.replace(' kWh','').astype(float).sum()
+            total_percent = display_df['Pourcentage récupéré'].str.replace(' %','').astype(float).sum()
+            total_duration = display_df['Durée de charge (h)'].str.replace(' h','').astype(float).sum()
+            total_power = total_energy / total_duration
+
+            # Créer la ligne TOTAL avec le même format que display_df
+            total_row = {
+                'Début charge': '<b>TOTAL</b>',
+                'Fin charge': '',
+                'Niveau batterie début': '',
+                'Niveau batterie fin': '',
+                'Énergie rechargée (kWh)': f'{total_energy:.2f} kWh',
+                'Pourcentage récupéré': f'{total_percent:.2f} %',
+                'Durée de charge (h)': f'{total_duration:.2f} h',
+                'Puissance de charge (kW)': f'{total_power:.2f} kW'
+            }
+            
+            # Insérer la ligne TOTAL au début
+            display_df_total = pd.concat([pd.DataFrame([total_row]), display_df], ignore_index=True)
+
+            # Nombre de lignes de données (hors TOTAL)
+            n = len(display_df)
+
+            # Générer numérotation décroissante pour les lignes de données
+            index_labels = ['TOTAL']  # première ligne = TOTAL
+            for i, idx in enumerate(charges_df.index):
+                num = n - i
+                if charges_df.loc[idx, "fakeCharge"]:
+                    label = f"{num} <span title=\"Ajout magique d'une charge manquante dans l'API\">✨</span>"
+                else:
+                    label = f"{num}"
+                index_labels.append(label)
+
+            display_df_total.index = index_labels
+
+            # Mettre en gras les valeurs de la première ligne (TOTAL)
+            display_df_total.iloc[0] = display_df_total.iloc[0].apply(lambda x: f"<b>{x}</b>")
+
+            # Afficher le tableau avec HTML pour les icônes et index personnalisé
+            st.write(display_df_total.to_html(escape=False), unsafe_allow_html=True)
 
             # Afficher le graphique de l'évolution du niveau de batterie
             #st.line_chart(charges_df.set_index('chargeStartDate')['chargeEndBatteryLevel'])

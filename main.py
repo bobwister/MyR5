@@ -67,8 +67,6 @@ async def get_renault_data(email, password):
         print("VIN: ", first_vehicle.vin)      # Numéro de série (VIN)
         VIN = first_vehicle.vin
 
-        #print(first_vehicle)
-
         # Instanciation de l'objet correspondant au véhicule
         RenaultVehicle = await RenaultAccount.get_api_vehicle(VIN)
         print(RenaultVehicle)
@@ -148,10 +146,9 @@ async def get_renault_data(email, password):
 
             # Calcul de la puissance de charge (kW)
             chargePower = chargeEnergyRecovered / (charge_duration / 60)
-            print("Puissance de recharge: ", round(chargePower, 2), "kW")
+            # print("Puissance de recharge: ", round(chargePower, 2), "kW")
 
             # Correction manuelle : insertion manuelle de recharge manquante
-            print(previous_end_level)
             if previous_end_level is not None and chargeStartBatteryLevel > previous_end_level:
                 percent_recovered = chargeStartBatteryLevel - previous_end_level
                 missing_energy = percent_recovered / 100 * USABLE_CAPACITY
@@ -216,7 +213,8 @@ async def get_renault_data(email, password):
                 "avg_consumption": avg_consumption
             },
             "gps": gps_data,
-            "charge_history": custom_charges
+            "charge_history": custom_charges,
+            "assets":  first_vehicle.raw_data["vehicleDetails"]["assets"]
         }
 
         return data

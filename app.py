@@ -125,6 +125,20 @@ if attrs:
         elif attrs['chargingStatus'] == 1.0:#0.2
             st.write("⚡ En charge")
 
+        # Nombre de colonnes par ligne
+        cols_count = 3
+        cols = st.columns(cols_count)
+
+        # Parcourir les assets et leurs renditions
+        for i, asset in enumerate(attrs['assets']):
+            viewpoint = asset["viewpoint"]
+            for rendition in asset["renditions"]:
+                url = rendition["url"]
+                resolutionType = rendition["resolutionType"]
+                caption = f"{viewpoint} ({resolutionType})"
+                # Afficher l'image dans la colonne correspondante
+                cols[i % cols_count].image(url, caption=caption, use_container_width=True)
+
     with tab_charge:
 
         # --- Historique des recharges ---
